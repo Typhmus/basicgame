@@ -2,44 +2,106 @@
 <html>
 <head>
   <title>Guess the Number Game</title>
+  <style>
+    /* Styling for the coin counter and scout message */
+    #coinCounter {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+    }
+    #scoutMessage {
+      font-size: 18px;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>Guess the Number Game</h1>
   <p>Guess a number between 1 and 10:</p>
-  <input type="number" id="guessInput">
+  <input type="text" id="guessInput">
   <input type="submit" value="Submit Guess" id="guessSubmit">
   <p id="message"></p>
+  <div id="coinCounter">Coins: <span id="coins">0</span></div>
+  <button id="buyScout">Buy Scout (Cost: 50 Coins)</button>
+  <p id="scoutMessage"></p>
 
   <script>
+    // Initialize the coin count from localStorage, or default to 0
+    let coins = parseInt(localStorage.getItem('coins')) || 0;
+    let scoutBought = false;
+    let scoutCost = 50;
+    let scoutMessageElement = document.getElementById('scoutMessage');
+    let attempts = 0;
+
     // Generate a random number between 1 and 10
     const randomNumber = Math.floor(Math.random() * 10) + 1;
 
     const guessInput = document.getElementById('guessInput');
     const guessSubmit = document.getElementById('guessSubmit');
     const message = document.getElementById('message');
-    let attempts = 0;
+    const coinCounter = document.getElementById('coins');
+    const buyScoutButton = document.getElementById('buyScout');
+
+    // Display the initial coin count
+    updateCoinCounter();
 
     guessSubmit.addEventListener('click', checkGuess);
+    buyScoutButton.addEventListener('click', buyScout);
 
     function checkGuess() {
-      const userGuess = parseInt(guessInput.value);
+      const userGuess = guessInput.value.trim().toLowerCase(); // Convert input to lowercase and trim whitespace
+      // Clear previous scout message
+      scoutMessageElement.textContent = '';
       attempts++;
 
-      if (userGuess === randomNumber) {
-        message.textContent = `Congratulations! You guessed the number ${randomNumber} in ${attempts} attempts.`;
+      if (userGuess === randomNumber.toString() && !scoutBought) {
+        coins += 10 - attempts + 1;
+        message.textContent = `Congratulations! You guessed the number ${randomNumber} in ${attempts} attempts. You earned ${10 - attempts + 1} coins.`;
         message.style.color = 'green';
-        guessInput.disabled = true;
+
+        // Disable the "Submit Guess" button only when Scout is not bought
         guessSubmit.disabled = true;
+
+        updateCoinCounter();
+        localStorage.setItem('coins', coins.toString());
+      } else if (userGuess === "69" || userGuess === "boldroller" || userGuess === "tagpro" || userGuess === "mltp") {
+        // Check for special codes and award 50 coins
+        coins += 50;
+        message.textContent = `You've entered a special code! You earned 50 coins.`;
+        message.style.color = 'green';
+        updateCoinCounter();
+        localStorage.setItem('coins', coins.toString());
       } else if (userGuess < randomNumber) {
         message.textContent = 'Too low! Try again.';
         message.style.color = 'red';
-      } else {
+      } else if (userGuess > randomNumber) {
         message.textContent = 'Too high! Try again.';
         message.style.color = 'red';
       }
 
       guessInput.value = '';
       guessInput.focus();
+    }
+
+    function buyScout() {
+      if (coins >= scoutCost && !scoutBought) {
+        coins -= scoutCost;
+        scoutBought = true;
+        buyScoutButton.disabled = true;
+
+        // Generate a range for the Scout message
+        const scoutMin = Math.max(1, randomNumber - 2);
+        const scoutMax = Math.min(10, randomNumber + 2);
+        scoutMessageElement.textContent = `Scout thinks the number will be between ${scoutMin} and ${scoutMax}.`;
+
+        updateCoinCounter();
+        localStorage.setItem('coins', coins.toString());
+      }
+    }
+
+    function updateCoinCounter() {
+      coinCounter.textContent = `Coins: ${coins}`;
     }
   </script>
 </body>
